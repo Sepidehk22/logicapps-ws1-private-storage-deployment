@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": { "value": "<identificativo-ambiente>" },
+    "location": { "value": "<regione-con-WS1-disponibile>" },
+    "vnetAddressPrefix": { "value": "<CIDR-vnet>" },
+    "integrationSubnetPrefix": { "value": "<CIDR-subnet-integration>" },
+    "privateEndpointSubnetPrefix": { "value": "<CIDR-subnet-private-endpoints>" },
+    "dnsServerIps": { "value": ["<IPv4-DNS-cliente>"] },
+    "resolverVnetResourceIds": { "value": ["<resource-ID-vnet-resolver>"] }
+  }
+}

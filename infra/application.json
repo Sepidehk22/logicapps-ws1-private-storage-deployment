@@ -1,0 +1,324 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.47.16.16243",
+      "templateHash": "10591908235645684665"
+    }
+  },
+  "parameters": {
+    "environmentName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "location": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dnsServerIps": {
+      "type": "array",
+      "minLength": 1,
+      "maxLength": 2,
+      "metadata": {
+        "description": "Same reachable customer DNS IPv4 addresses as foundation."
+      }
+    },
+    "serviceAUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "HTTPS health URL, without secrets, SAS tokens or embedded credentials."
+      }
+    },
+    "serviceBUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "HTTPS health URL, without secrets, SAS tokens or embedded credentials."
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {}
+    }
+  },
+  "variables": {
+    "suffix": "[uniqueString(resourceGroup().id, parameters('environmentName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "[format('runtime-{0}', variables('suffix'))]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "suffix": {
+            "value": "[variables('suffix')]"
+          },
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "integrationSubnetId": {
+            "value": "[format('{0}/subnets/integration', resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', variables('suffix'))))]"
+          },
+          "privateEndpointSubnetId": {
+            "value": "[format('{0}/subnets/private-endpoints', resourceId('Microsoft.Network/virtualNetworks', format('vnet-{0}', variables('suffix'))))]"
+          },
+          "appZoneId": {
+            "value": "[resourceId('Microsoft.Network/privateDnsZones', 'privatelink.azurewebsites.net')]"
+          },
+          "identityId": {
+            "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', variables('suffix')))]"
+          },
+          "identityClientId": {
+            "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('id-{0}', variables('suffix'))), '2023-01-31').clientId]"
+          },
+          "insightsConnectionString": {
+            "value": "[reference(resourceId('Microsoft.Insights/components', format('ai-{0}', variables('suffix'))), '2020-02-02').ConnectionString]"
+          },
+          "workspaceId": {
+            "value": "[resourceId('Microsoft.OperationalInsights/workspaces', format('log-{0}', variables('suffix')))]"
+          },
+          "dnsServerIps": {
+            "value": "[parameters('dnsServerIps')]"
+          },
+          "serviceAUrl": {
+            "value": "[parameters('serviceAUrl')]"
+          },
+          "serviceBUrl": {
+            "value": "[parameters('serviceBUrl')]"
+          },
+          "runtimeStorageConnection": {
+            "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix={2}', format('st{0}', variables('suffix')), listKeys(resourceId('Microsoft.Storage/storageAccounts', format('st{0}', variables('suffix'))), '2023-05-01').keys[0].value, environment().suffixes.storage)]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.47.16.16243",
+              "templateHash": "960031413893469051"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "suffix": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object"
+            },
+            "integrationSubnetId": {
+              "type": "string"
+            },
+            "privateEndpointSubnetId": {
+              "type": "string"
+            },
+            "appZoneId": {
+              "type": "string"
+            },
+            "identityId": {
+              "type": "string"
+            },
+            "identityClientId": {
+              "type": "string"
+            },
+            "insightsConnectionString": {
+              "type": "string"
+            },
+            "workspaceId": {
+              "type": "string"
+            },
+            "dnsServerIps": {
+              "type": "array"
+            },
+            "serviceAUrl": {
+              "type": "string"
+            },
+            "serviceBUrl": {
+              "type": "string"
+            },
+            "runtimeStorageConnection": {
+              "type": "securestring"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2024-11-01",
+              "name": "[format('asp-{0}', parameters('suffix'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "elastic",
+              "sku": {
+                "name": "WS1",
+                "tier": "WorkflowStandard",
+                "capacity": 1
+              },
+              "properties": {
+                "reserved": false
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2024-11-01",
+              "name": "[format('la-{0}', parameters('suffix'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "kind": "functionapp,workflowapp",
+              "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                  "[format('{0}', parameters('identityId'))]": {}
+                }
+              },
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('asp-{0}', parameters('suffix')))]",
+                "virtualNetworkSubnetId": "[parameters('integrationSubnetId')]",
+                "publicNetworkAccess": "Disabled",
+                "httpsOnly": true,
+                "outboundVnetRouting": {
+                  "allTraffic": true,
+                  "contentShareTraffic": true
+                },
+                "siteConfig": {
+                  "minTlsVersion": "1.2",
+                  "scmMinTlsVersion": "1.2",
+                  "ftpsState": "Disabled",
+                  "alwaysOn": true,
+                  "appSettings": "[concat(createArray(createObject('name', 'APP_KIND', 'value', 'workflowApp'), createObject('name', 'FUNCTIONS_EXTENSION_VERSION', 'value', '~4'), createObject('name', 'FUNCTIONS_WORKER_RUNTIME', 'value', 'dotnet'), createObject('name', 'AzureWebJobsStorage', 'value', parameters('runtimeStorageConnection')), createObject('name', 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING', 'value', parameters('runtimeStorageConnection')), createObject('name', 'WEBSITE_CONTENTSHARE', 'value', 'logicapp-content'), createObject('name', 'WEBSITE_CONTENTOVERVNET', 'value', '1'), createObject('name', 'WEBSITE_SKIP_CONTENTSHARE_VALIDATION', 'value', '1'), createObject('name', 'WEBSITE_DNS_SERVER', 'value', parameters('dnsServerIps')[0]), createObject('name', 'APPLICATIONINSIGHTS_CONNECTION_STRING', 'value', parameters('insightsConnectionString')), createObject('name', 'APPLICATIONINSIGHTS_AUTHENTICATION_STRING', 'value', format('Authorization=AAD;ClientId={0}', parameters('identityClientId'))), createObject('name', 'AVAILABILITY_SERVICE_A_URL', 'value', parameters('serviceAUrl')), createObject('name', 'AVAILABILITY_SERVICE_B_URL', 'value', parameters('serviceBUrl'))), if(greater(length(parameters('dnsServerIps')), 1), createArray(createObject('name', 'WEBSITE_DNS_ALT_SERVER', 'value', parameters('dnsServerIps')[1])), createArray()))]"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', format('asp-{0}', parameters('suffix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+              "apiVersion": "2024-11-01",
+              "name": "[format('{0}/{1}', format('la-{0}', parameters('suffix')), 'scm')]",
+              "properties": {
+                "allow": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', format('la-{0}', parameters('suffix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites/basicPublishingCredentialsPolicies",
+              "apiVersion": "2024-11-01",
+              "name": "[format('{0}/{1}', format('la-{0}', parameters('suffix')), 'ftp')]",
+              "properties": {
+                "allow": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', format('la-{0}', parameters('suffix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints",
+              "apiVersion": "2024-05-01",
+              "name": "[format('pe-app-{0}', parameters('suffix'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "subnet": {
+                  "id": "[parameters('privateEndpointSubnetId')]"
+                },
+                "privateLinkServiceConnections": [
+                  {
+                    "name": "sites",
+                    "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', format('la-{0}', parameters('suffix')))]",
+                      "groupIds": [
+                        "sites"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', format('la-{0}', parameters('suffix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
+              "apiVersion": "2024-05-01",
+              "name": "[format('{0}/{1}', format('pe-app-{0}', parameters('suffix')), 'default')]",
+              "properties": {
+                "privateDnsZoneConfigs": [
+                  {
+                    "name": "sites",
+                    "properties": {
+                      "privateDnsZoneId": "[parameters('appZoneId')]"
+                    }
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateEndpoints', format('pe-app-{0}', parameters('suffix')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[resourceId('Microsoft.Web/sites', format('la-{0}', parameters('suffix')))]",
+              "name": "workflow-runtime",
+              "properties": {
+                "workspaceId": "[parameters('workspaceId')]",
+                "logs": [
+                  {
+                    "category": "WorkflowRuntime",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', format('la-{0}', parameters('suffix')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "appName": {
+              "type": "string",
+              "value": "[format('la-{0}', parameters('suffix'))]"
+            },
+            "appHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', format('la-{0}', parameters('suffix'))), '2024-11-01').defaultHostName]"
+            },
+            "appPrivateEndpointName": {
+              "type": "string",
+              "value": "[format('pe-app-{0}', parameters('suffix'))]"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "appName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', format('runtime-{0}', variables('suffix'))), '2025-04-01').outputs.appName.value]"
+    },
+    "appHostName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', format('runtime-{0}', variables('suffix'))), '2025-04-01').outputs.appHostName.value]"
+    },
+    "appPrivateEndpointName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', format('runtime-{0}', variables('suffix'))), '2025-04-01').outputs.appPrivateEndpointName.value]"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": { "value": "<stesso-identificativo-della-fondazione>" },
+    "location": { "value": "<stessa-regione-della-fondazione>" },
+    "dnsServerIps": { "value": ["<stesso-IPv4-DNS-cliente>"] },
+    "serviceAUrl": { "value": "https://<servizio-a-cliente>/health" },
+    "serviceBUrl": { "value": "https://<servizio-b-cliente>/health" }
+  }
+}

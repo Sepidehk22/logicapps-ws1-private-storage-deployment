@@ -1,0 +1,10 @@
+{
+  "serviceAUrl": {
+    "type": "string",
+    "value": "@appsetting('AVAILABILITY_SERVICE_A_URL')"
+  },
+  "serviceBUrl": {
+    "type": "string",
+    "value": "@appsetting('AVAILABILITY_SERVICE_B_URL')"
+  }
+}

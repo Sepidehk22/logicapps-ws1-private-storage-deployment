@@ -1,0 +1,42 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "triggers": {
+      "Every_five_minutes": {
+        "type": "Recurrence",
+        "recurrence": { "frequency": "Minute", "interval": 5 }
+      }
+    },
+    "actions": {
+      "Check_Service_A": {
+        "type": "Http",
+        "inputs": {
+          "method": "GET",
+          "uri": "@parameters('serviceAUrl')",
+          "retryPolicy": { "type": "none" }
+        },
+        "runAfter": {},
+        "trackedProperties": {
+          "service": "service-a",
+          "httpStatus": "@outputs('Check_Service_A')?['statusCode']"
+        }
+      },
+      "Check_Service_B": {
+        "type": "Http",
+        "inputs": {
+          "method": "GET",
+          "uri": "@parameters('serviceBUrl')",
+          "retryPolicy": { "type": "none" }
+        },
+        "runAfter": {},
+        "trackedProperties": {
+          "service": "service-b",
+          "httpStatus": "@outputs('Check_Service_B')?['statusCode']"
+        }
+      }
+    },
+    "outputs": {}
+  },
+  "kind": "Stateful"
+}
